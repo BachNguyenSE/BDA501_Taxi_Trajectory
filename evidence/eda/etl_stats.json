@@ -1,0 +1,11 @@
+{
+  "_generated_utc": "2026-11-13T13:19:43+00:00",
+  "_python": "3.12.16",
+  "source": "/workspace/data/raw/porto/train.csv",
+  "trips_in": 1673305,
+  "segments_kept": 79502913,
+  "zones": 2152,
+  "zone_hour_speed_rows": 72142,
+  "zone_graph_edges": 10308,
+  "trip_features_rows": 1647347
+}

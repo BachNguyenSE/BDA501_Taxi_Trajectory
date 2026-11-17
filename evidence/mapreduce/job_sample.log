@@ -1,0 +1,89 @@
+packageJobJar: [/tmp/hadoop-unjar12092222699119641640/] [] /tmp/streamjob14500377084487047343.jar tmpDir=null
+2026-11-13 12:52:03 INFO  DefaultNoHARMFailoverProxyProvider:64 - Connecting to ResourceManager at resourcemanager/172.21.0.6:8032
+2026-11-13 12:52:03 INFO  DefaultNoHARMFailoverProxyProvider:64 - Connecting to ResourceManager at resourcemanager/172.21.0.6:8032
+2026-11-13 12:52:03 INFO  JobResourceUploader:907 - Disabling Erasure Coding for path: /tmp/hadoop-yarn/staging/hadoop/.staging/job_1794573620080_0002
+2026-11-13 12:52:03 INFO  FileInputFormat:267 - Total input files to process : 1
+2026-11-13 12:52:03 INFO  JobSubmitter:203 - number of splits:2
+2026-11-13 12:52:04 INFO  JobSubmitter:299 - Submitting tokens for job: job_1794573620080_0002
+2026-11-13 12:52:04 INFO  JobSubmitter:300 - Executing with tokens: []
+2026-11-13 12:52:04 INFO  Configuration:2885 - resource-types.xml not found
+2026-11-13 12:52:04 INFO  ResourceUtils:476 - Unable to find 'resource-types.xml'.
+2026-11-13 12:52:04 INFO  YarnClientImpl:356 - Submitted application application_1794573620080_0002
+2026-11-13 12:52:04 INFO  Job:1681 - The url to track the job: http://resourcemanager:8088/proxy/application_1794573620080_0002/
+2026-11-13 12:52:04 INFO  Job:1726 - Running job: job_1794573620080_0002
+2026-11-13 12:52:07 INFO  Job:1747 - Job job_1794573620080_0002 running in uber mode : false
+2026-11-13 12:52:07 INFO  Job:1754 -  map 0% reduce 0%
+2026-11-13 12:52:11 INFO  Job:1754 -  map 100% reduce 0%
+2026-11-13 12:52:14 INFO  Job:1754 -  map 100% reduce 100%
+2026-11-13 12:52:15 INFO  Job:1765 - Job job_1794573620080_0002 completed successfully
+2026-11-13 12:52:15 INFO  Job:1772 - Counters: 62
+	File System Counters
+		FILE: Number of bytes read=728295
+		FILE: Number of bytes written=2746136
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=22820367
+		HDFS: Number of bytes written=896752
+		HDFS: Number of read operations=16
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=4
+		HDFS: Number of bytes read erasure-coded=0
+	Job Counters 
+		Launched map tasks=2
+		Launched reduce tasks=2
+		Rack-local map tasks=2
+		Total time spent by all maps in occupied slots (ms)=15120
+		Total time spent by all reduces in occupied slots (ms)=11022
+		Total time spent by all map tasks (ms)=3780
+		Total time spent by all reduce tasks (ms)=1837
+		Total vcore-milliseconds taken by all map tasks=3780
+		Total vcore-milliseconds taken by all reduce tasks=1837
+		Total megabyte-milliseconds taken by all map tasks=1935360
+		Total megabyte-milliseconds taken by all reduce tasks=1410816
+	Map-Reduce Framework
+		Map input records=20001
+		Map output records=940231
+		Map output bytes=23505775
+		Map output materialized bytes=728307
+		Input split bytes=190
+		Combine input records=940231
+		Combine output records=25666
+		Reduce input groups=16251
+		Reduce shuffle bytes=728307
+		Reduce input records=25666
+		Reduce output records=16251
+		Spilled Records=51332
+		Shuffled Maps =4
+		Failed Shuffles=0
+		Merged Map outputs=4
+		GC time elapsed (ms)=31
+		CPU time spent (ms)=3510
+		Physical memory (bytes) snapshot=1043705856
+		Virtual memory (bytes) snapshot=9847955456
+		Total committed heap usage (bytes)=512753664
+		Peak Map Physical memory (bytes)=295632896
+		Peak Map Virtual memory (bytes)=2355736576
+		Peak Reduce Physical memory (bytes)=231952384
+		Peak Reduce Virtual memory (bytes)=2576957440
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=22820177
+	File Output Format Counters 
+		Bytes Written=896752
+	porto
+		map_input_records=20001
+		map_output_records=940231
+		segments_gps_jump=2292
+		segments_outside_bbox=17308
+		segments_total=959831
+		skip_header=1
+		skip_lt_2_points=471
+		trips_used=19529
+2026-11-13 12:52:15 INFO  StreamJob:1029 - Output directory: /porto/output/zone_hour_speed_sample

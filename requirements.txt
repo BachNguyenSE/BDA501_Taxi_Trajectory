@@ -1,0 +1,16 @@
+# Pinned versions — installed inside the Spark container (docker/spark/Dockerfile).
+pyspark==4.0.1
+pyarrow==21.0.0
+pandas==2.3.3
+numpy==2.3.4
+matplotlib==3.10.7
+pyyaml==6.0.3
+pymongo==4.15.3
+kafka-python==2.2.15
+networkx==3.5
+jupyterlab==4.4.10
+pytest==8.4.2
+scikit-learn==1.7.2
+joblib==1.5.2
+fastapi==0.120.4
+uvicorn[standard]==0.38.0

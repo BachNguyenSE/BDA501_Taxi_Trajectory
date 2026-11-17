@@ -1,0 +1,4 @@
+Topic: porto.gps.pings	TopicId: NA6ozb-7QteLPVEGbx44tQ	PartitionCount: 3	ReplicationFactor: 1	Configs: 
+	Topic: porto.gps.pings	Partition: 0	Leader: 1	Replicas: 1	Isr: 1	Elr: 	LastKnownElr: 
+	Topic: porto.gps.pings	Partition: 1	Leader: 1	Replicas: 1	Isr: 1	Elr: 	LastKnownElr: 
+	Topic: porto.gps.pings	Partition: 2	Leader: 1	Replicas: 1	Isr: 1	Elr: 	LastKnownElr: 

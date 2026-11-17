@@ -1,0 +1,39 @@
+{
+  "_generated_utc": "2026-11-13T13:20:38+00:00",
+  "_python": "3.12.16",
+  "n_rows": 1647347,
+  "n_sklearn_sample": 150000,
+  "feature_cols": [
+    "straight_km",
+    "hour",
+    "day_of_week",
+    "is_weekend",
+    "bearing_deg"
+  ],
+  "results": [
+    {
+      "model": "linear_regression",
+      "rmse_min": 8.22,
+      "mae_min": 4.352,
+      "r2": 0.196
+    },
+    {
+      "model": "gbt_regressor",
+      "rmse_min": 7.953,
+      "mae_min": 4.048,
+      "r2": 0.2475
+    },
+    {
+      "model": "sklearn_linear_regression",
+      "rmse_min": 8.013,
+      "mae_min": 4.301,
+      "r2": 0.1944
+    },
+    {
+      "model": "sklearn_gbt",
+      "rmse_min": 7.805,
+      "mae_min": 4.024,
+      "r2": 0.2356
+    }
+  ]
+}

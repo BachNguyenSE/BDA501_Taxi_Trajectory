@@ -1,0 +1,309 @@
+{
+  "_generated_utc": "2026-11-11T08:24:48+00:00",
+  "_python": "3.12.16",
+  "dataset": "NYC TLC Yellow Taxi Trip Records 2025-01..2025-06",
+  "files": [
+    {
+      "month": "2025-01",
+      "file_mb": 59.2,
+      "columns": 20
+    },
+    {
+      "month": "2025-02",
+      "file_mb": 60.3,
+      "columns": 20
+    },
+    {
+      "month": "2025-03",
+      "file_mb": 70.0,
+      "columns": 20
+    },
+    {
+      "month": "2025-04",
+      "file_mb": 67.4,
+      "columns": 20
+    },
+    {
+      "month": "2025-05",
+      "file_mb": 77.8,
+      "columns": 20
+    },
+    {
+      "month": "2025-06",
+      "file_mb": 73.5,
+      "columns": 20
+    }
+  ],
+  "schema_union": [
+    "Airport_fee",
+    "DOLocationID",
+    "PULocationID",
+    "RatecodeID",
+    "VendorID",
+    "cbd_congestion_fee",
+    "congestion_surcharge",
+    "extra",
+    "fare_amount",
+    "improvement_surcharge",
+    "mta_tax",
+    "passenger_count",
+    "payment_type",
+    "store_and_fwd_flag",
+    "tip_amount",
+    "tolls_amount",
+    "total_amount",
+    "tpep_dropoff_datetime",
+    "tpep_pickup_datetime",
+    "trip_distance"
+  ],
+  "schema_drift": [],
+  "rows_per_month": {
+    "2025-01": 3475226,
+    "2025-02": 3577543,
+    "2025-03": 4145257,
+    "2025-04": 3970553,
+    "2025-05": 4591845,
+    "2025-06": 4322960
+  },
+  "total_rows": 24083384,
+  "coordinate_columns_found": [],
+  "zone_lookup_rows": 265,
+  "spatial": {
+    "distinct_pickup_zones": 262,
+    "distinct_dropoff_zones": 263,
+    "distinct_od_pairs": 51163,
+    "share_same_zone_trips": 0.04758031512515019
+  },
+  "data_quality": [
+    {
+      "rule": "null_pickup_or_dropoff_time",
+      "action": "exclude",
+      "rows": 0,
+      "pct": 0.0
+    },
+    {
+      "rule": "null_passenger_count",
+      "action": "flag only",
+      "rows": 5418601,
+      "pct": 22.499
+    },
+    {
+      "rule": "duration_le_0",
+      "action": "exclude",
+      "rows": 197119,
+      "pct": 0.818
+    },
+    {
+      "rule": "duration_gt_180_min",
+      "action": "exclude",
+      "rows": 8755,
+      "pct": 0.036
+    },
+    {
+      "rule": "pickup_outside_period",
+      "action": "exclude",
+      "rows": 24,
+      "pct": 0.0
+    },
+    {
+      "rule": "trip_distance_le_0",
+      "action": "exclude",
+      "rows": 661842,
+      "pct": 2.748
+    },
+    {
+      "rule": "trip_distance_gt_100_mi",
+      "action": "exclude",
+      "rows": 1488,
+      "pct": 0.006
+    },
+    {
+      "rule": "unknown_zone_id",
+      "action": "exclude",
+      "rows": 178667,
+      "pct": 0.742
+    },
+    {
+      "rule": "negative_total_amount",
+      "action": "flag only",
+      "rows": 446311,
+      "pct": 1.853
+    }
+  ],
+  "duplicate_rows": 0,
+  "rows_passing_all_rules": 23057290,
+  "top_od_pair": {
+    "pu": 237,
+    "do": 236,
+    "label": "Upper East Side South (Manhattan) → Upper East Side North (Manhattan)",
+    "trips": 150440
+  },
+  "top_od_speed_by_hour": [
+    {
+      "hour": 0,
+      "trips": 754,
+      "median_speed_mph": 12.903896103896102,
+      "median_duration_min": 4.7
+    },
+    {
+      "hour": 1,
+      "trips": 328,
+      "median_speed_mph": 12.683937823834196,
+      "median_duration_min": 4.95
+    },
+    {
+      "hour": 2,
+      "trips": 148,
+      "median_speed_mph": 11.525691699604742,
+      "median_duration_min": 4.75
+    },
+    {
+      "hour": 3,
+      "trips": 67,
+      "median_speed_mph": 11.49090909090909,
+      "median_duration_min": 5.5
+    },
+    {
+      "hour": 4,
+      "trips": 44,
+      "median_speed_mph": 12.061855670103093,
+      "median_duration_min": 4.916666666666667
+    },
+    {
+      "hour": 5,
+      "trips": 111,
+      "median_speed_mph": 13.609756097560975,
+      "median_duration_min": 4.316666666666666
+    },
+    {
+      "hour": 6,
+      "trips": 568,
+      "median_speed_mph": 12.932975871313674,
+      "median_duration_min": 4.583333333333333
+    },
+    {
+      "hour": 7,
+      "trips": 4494,
+      "median_speed_mph": 7.592727272727273,
+      "median_duration_min": 7.516666666666667
+    },
+    {
+      "hour": 8,
+      "trips": 5846,
+      "median_speed_mph": 7.648351648351648,
+      "median_duration_min": 7.116666666666666
+    },
+    {
+      "hour": 9,
+      "trips": 6721,
+      "median_speed_mph": 7.8056074766355135,
+      "median_duration_min": 6.716666666666667
+    },
+    {
+      "hour": 10,
+      "trips": 8335,
+      "median_speed_mph": 7.100154083204931,
+      "median_duration_min": 7.65
+    },
+    {
+      "hour": 11,
+      "trips": 9449,
+      "median_speed_mph": 7.552050473186121,
+      "median_duration_min": 7.483333333333333
+    },
+    {
+      "hour": 12,
+      "trips": 10661,
+      "median_speed_mph": 7.79783393501805,
+      "median_duration_min": 7.3
+    },
+    {
+      "hour": 13,
+      "trips": 10931,
+      "median_speed_mph": 8.053537284894837,
+      "median_duration_min": 7.233333333333333
+    },
+    {
+      "hour": 14,
+      "trips": 13338,
+      "median_speed_mph": 7.458401305057096,
+      "median_duration_min": 8.0
+    },
+    {
+      "hour": 15,
+      "trips": 13399,
+      "median_speed_mph": 7.808219178082192,
+      "median_duration_min": 7.716666666666667
+    },
+    {
+      "hour": 16,
+      "trips": 12023,
+      "median_speed_mph": 8.947976878612717,
+      "median_duration_min": 6.833333333333333
+    },
+    {
+      "hour": 17,
+      "trips": 11463,
+      "median_speed_mph": 9.759036144578314,
+      "median_duration_min": 6.283333333333333
+    },
+    {
+      "hour": 18,
+      "trips": 10455,
+      "median_speed_mph": 10.408345752608048,
+      "median_duration_min": 5.9
+    },
+    {
+      "hour": 19,
+      "trips": 8626,
+      "median_speed_mph": 11.359223300970875,
+      "median_duration_min": 5.483333333333333
+    },
+    {
+      "hour": 20,
+      "trips": 7744,
+      "median_speed_mph": 11.454545454545453,
+      "median_duration_min": 5.6
+    },
+    {
+      "hour": 21,
+      "trips": 8080,
+      "median_speed_mph": 11.63720930232558,
+      "median_duration_min": 5.666666666666667
+    },
+    {
+      "hour": 22,
+      "trips": 4788,
+      "median_speed_mph": 12.023575638506877,
+      "median_duration_min": 5.35
+    },
+    {
+      "hour": 23,
+      "trips": 2067,
+      "median_speed_mph": 12.563758389261745,
+      "median_duration_min": 5.0
+    }
+  ],
+  "feasibility": [
+    {
+      "requirement": "Trip duration / ETA prediction",
+      "feasible": "YES",
+      "evidence": "pickup/dropoff timestamps + PU/DO zone IDs give a clean regression label"
+    },
+    {
+      "requirement": "Locate congested AREAS along the way",
+      "feasible": "NO",
+      "evidence": "no coordinate columns (0 lat/lon/polyline columns); only 2 zone IDs per trip, so slowness cannot be attributed to any intermediate area"
+    },
+    {
+      "requirement": "Suggest a ROUTE (sequence of areas)",
+      "feasible": "NO",
+      "evidence": "no intermediate positions → no zone-to-zone transition graph can be learned"
+    },
+    {
+      "requirement": "Speed per area per hour",
+      "feasible": "PARTIAL",
+      "evidence": "only an average speed per OD pair (e.g. Upper East Side South (Manhattan) → Upper East Side North (Manhattan)); 4.8% of trips start and end in the same zone"
+    }
+  ]
+}

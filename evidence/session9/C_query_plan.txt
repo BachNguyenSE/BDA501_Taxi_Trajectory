@@ -1,0 +1,416 @@
+C_query_plan — Spark 4.0.1, local[*], curated Parquet from the FULL dataset. Measured.
+
+===== Q3 [broadcast_allowed (default)] — join strategy: BroadcastHashJoin =====
+
+WITH t AS (
+  SELECT concat_ws('_', CAST(floor(start_lon / 0.005) AS INT), CAST(floor(start_lat / 0.005) AS INT)) AS origin_zone,
+         hour, is_weekend, duration_min, straight_km
+  FROM trip_features
+)
+SELECT t.origin_zone, count(*) AS trips,
+       round(avg(t.duration_min), 2) AS avg_duration_min,
+       round(avg(t.straight_km), 2) AS avg_straight_km,
+       round(avg(s.avg_speed_kmh), 2) AS origin_hist_speed_kmh
+FROM t JOIN zone_hour_speed s
+  ON t.origin_zone = s.zone_id AND t.hour = s.hour AND t.is_weekend = s.is_weekend
+GROUP BY t.origin_zone
+HAVING count(*) >= 1000
+ORDER BY trips DESC
+LIMIT 15
+
+--- EXPLAIN FORMATTED (planned) ---
+== Physical Plan ==
+AdaptiveSparkPlan (14)
++- TakeOrderedAndProject (13)
+   +- Filter (12)
+      +- HashAggregate (11)
+         +- Exchange (10)
+            +- HashAggregate (9)
+               +- Project (8)
+                  +- BroadcastHashJoin Inner BuildRight (7)
+                     :- Project (3)
+                     :  +- Filter (2)
+                     :     +- Scan parquet  (1)
+                     +- BroadcastExchange (6)
+                        +- Filter (5)
+                           +- Scan parquet  (4)
+
+
+(1) Scan parquet 
+Output [6]: [start_lon#20, start_lat#21, duration_min#25, hour#27, is_weekend#29, straight_km#30]
+Batched: true
+Location: InMemoryFileIndex [file:/workspace/data/curated/trip_features]
+PushedFilters: [IsNotNull(hour), IsNotNull(is_weekend)]
+ReadSchema: struct<start_lon:double,start_lat:double,duration_min:double,hour:int,is_weekend:int,straight_km:double>
+
+(2) Filter
+Input [6]: [start_lon#20, start_lat#21, duration_min#25, hour#27, is_weekend#29, straight_km#30]
+Condition : (isnotnull(hour#27) AND isnotnull(is_weekend#29))
+
+(3) Project
+Output [5]: [concat_ws(_, cast(cast(FLOOR((start_lon#20 / 0.005)) as int) as string), cast(cast(FLOOR((start_lat#21 / 0.005)) as int) as string)) AS origin_zone#166, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+Input [6]: [start_lon#20, start_lat#21, duration_min#25, hour#27, is_weekend#29, straight_km#30]
+
+(4) Scan parquet 
+Output [4]: [zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+Batched: true
+Location: InMemoryFileIndex [file:/workspace/data/curated/zone_hour_speed]
+PushedFilters: [IsNotNull(zone_id), IsNotNull(hour), IsNotNull(is_weekend)]
+ReadSchema: struct<zone_id:string,hour:int,is_weekend:int,avg_speed_kmh:double>
+
+(5) Filter
+Input [4]: [zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+Condition : ((isnotnull(zone_id#6) AND isnotnull(hour#7)) AND isnotnull(is_weekend#8))
+
+(6) BroadcastExchange
+Input [4]: [zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, false], input[1, int, false], input[2, int, false]),false), [plan_id=696]
+
+(7) BroadcastHashJoin
+Left keys [3]: [origin_zone#166, hour#27, is_weekend#29]
+Right keys [3]: [zone_id#6, hour#7, is_weekend#8]
+Join type: Inner
+Join condition: None
+
+(8) Project
+Output [4]: [origin_zone#166, duration_min#25, straight_km#30, avg_speed_kmh#12]
+Input [9]: [origin_zone#166, hour#27, is_weekend#29, duration_min#25, straight_km#30, zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+
+(9) HashAggregate
+Input [4]: [origin_zone#166, duration_min#25, straight_km#30, avg_speed_kmh#12]
+Keys [1]: [origin_zone#166]
+Functions [4]: [partial_count(1), partial_avg(duration_min#25), partial_avg(straight_km#30), partial_avg(avg_speed_kmh#12)]
+Aggregate Attributes [7]: [count#176L, sum#177, count#178L, sum#179, count#180L, sum#181, count#182L]
+Results [8]: [origin_zone#166, count#183L, sum#184, count#185L, sum#186, count#187L, sum#188, count#189L]
+
+(10) Exchange
+Input [8]: [origin_zone#166, count#183L, sum#184, count#185L, sum#186, count#187L, sum#188, count#189L]
+Arguments: hashpartitioning(origin_zone#166, 64), ENSURE_REQUIREMENTS, [plan_id=701]
+
+(11) HashAggregate
+Input [8]: [origin_zone#166, count#183L, sum#184, count#185L, sum#186, count#187L, sum#188, count#189L]
+Keys [1]: [origin_zone#166]
+Functions [4]: [count(1), avg(duration_min#25), avg(straight_km#30), avg(avg_speed_kmh#12)]
+Aggregate Attributes [4]: [count(1)#171L, avg(duration_min#25)#173, avg(straight_km#30)#174, avg(avg_speed_kmh#12)#175]
+Results [5]: [origin_zone#166, count(1)#171L AS trips#162L, round(avg(duration_min#25)#173, 2) AS avg_duration_min#163, round(avg(straight_km#30)#174, 2) AS avg_straight_km#164, round(avg(avg_speed_kmh#12)#175, 2) AS origin_hist_speed_kmh#165]
+
+(12) Filter
+Input [5]: [origin_zone#166, trips#162L, avg_duration_min#163, avg_straight_km#164, origin_hist_speed_kmh#165]
+Condition : (trips#162L >= 1000)
+
+(13) TakeOrderedAndProject
+Input [5]: [origin_zone#166, trips#162L, avg_duration_min#163, avg_straight_km#164, origin_hist_speed_kmh#165]
+Arguments: 15, [trips#162L DESC NULLS LAST], [origin_zone#166, trips#162L, avg_duration_min#163, avg_straight_km#164, origin_hist_speed_kmh#165]
+
+(14) AdaptiveSparkPlan
+Output [5]: [origin_zone#166, trips#162L, avg_duration_min#163, avg_straight_km#164, origin_hist_speed_kmh#165]
+Arguments: isFinalPlan=false
+
+
+--- final adaptive plan after execution ---
+AdaptiveSparkPlan isFinalPlan=true
++- == Final Plan ==
+   ResultQueryStage 2
+   +- TakeOrderedAndProject(limit=15, orderBy=[trips#120L DESC NULLS LAST], output=[origin_zone#124,trips#120L,avg_duration_min#121,avg_straight_km#122,origin_hist_speed_kmh#123])
+      +- *(3) Filter (trips#120L >= 1000)
+         +- *(3) HashAggregate(keys=[origin_zone#124], functions=[count(1), avg(duration_min#25), avg(straight_km#30), avg(avg_speed_kmh#12)], output=[origin_zone#124, trips#120L, avg_duration_min#121, avg_straight_km#122, origin_hist_speed_kmh#123])
+            +- AQEShuffleRead coalesced
+               +- ShuffleQueryStage 1
+                  +- Exchange hashpartitioning(origin_zone#124, 64), ENSURE_REQUIREMENTS, [plan_id=612]
+                     +- *(2) HashAggregate(keys=[origin_zone#124], functions=[partial_count(1), partial_avg(duration_min#25), partial_avg(straight_km#30), partial_avg(avg_speed_kmh#12)], output=[origin_zone#124, count#137L, sum#138, count#139L, sum#140, count#141L, sum#142, count#143L])
+                        +- *(2) Project [origin_zone#124, duration_min#25, straight_km#30, avg_speed_kmh#12]
+                           +- *(2) BroadcastHashJoin [origin_zone#124, hour#27, is_weekend#29], [zone_id#6, hour#7, is_weekend#8], Inner, BuildRight, false
+                              :- *(2) Project [concat_ws(_, cast(cast(FLOOR((start_lon#20 / 0.005)) as int) as string), cast(cast(FLOOR((start_lat#21 / 0.005)) as int) as string)) AS origin_zone#124, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+                              :  +- *(2) Filter (isnotnull(hour#27) AND isnotnull(is_weekend#29))
+                              :     +- *(2) ColumnarToRow
+                              :        +- FileScan parquet [start_lon#20,start_lat#21,duration_min#25,hour#27,is_weekend#29,straight_km#30] Batched: true, DataFilters: [isnotnull(hour#27), isnotnull(is_weekend#29)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/trip_features], PartitionFilters: [], PushedFilters: [IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<start_lon:double,start_lat:double,duration_min:double,hour:int,is_weekend:int,straight_km:...
+                              +- BroadcastQueryStage 0
+                                 +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, string, false], input[1, int, false], input[2, int, false]),false), [plan_id=547]
+                                    +- *(1) Filter ((isnotnull(zone_id#6) AND isnotnull(hour#7)) AND isnotnull(is_weekend#8))
+                                       +- *(1) ColumnarToRow
+                                          +- FileScan parquet [zone_id#6,hour#7,is_weekend#8,avg_speed_kmh#12] Batched: true, DataFilters: [isnotnull(zone_id#6), isnotnull(hour#7), isnotnull(is_weekend#8)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/zone_hour_speed], PartitionFilters: [], PushedFilters: [IsNotNull(zone_id), IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<zone_id:string,hour:int,is_weekend:int,avg_speed_kmh:double>
++- == Initial Plan ==
+   TakeOrderedAndProject(limit=15, orderBy=[trips#120L DESC NULLS LAST], output=[origin_zone#124,trips#120L,avg_duration_min#121,avg_straight_km#122,origin_hist_speed_kmh#123])
+   +- Filter (trips#120L >= 1000)
+      +- HashAggregate(keys=[origin_zone#124], functions=[count(1), avg(duration_min#25), avg(straight_km#30), avg(avg_speed_kmh#12)], output=[origin_zone#124, trips#120L, avg_duration_min#121, avg_straight_km#122, origin_hist_speed_kmh#123])
+         +- Exchange hashpartitioning(origin_zone#124, 64), ENSURE_REQUIREMENTS, [plan_id=519]
+            +- HashAggregate(keys=[origin_zone#124], functions=[partial_count(1), partial_avg(duration_min#25), partial_avg(straight_km#30), partial_avg(avg_speed_kmh#12)], output=[origin_zone#124, count#137L, sum#138, count#139L, sum#140, count#141L, sum#142, count#143L])
+               +- Project [origin_zone#124, duration_min#25, straight_km#30, avg_speed_kmh#12]
+                  +- BroadcastHashJoin [origin_zone#124, hour#27, is_weekend#29], [zone_id#6, hour#7, is_weekend#8], Inner, BuildRight, false
+                     :- Project [concat_ws(_, cast(cast(FLOOR((start_lon#20 / 0.005)) as int) as string), cast(cast(FLOOR((start_lat#21 / 0.005)) as int) as string)) AS origin_zone#124, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+                     :  +- Filter (isnotnull(hour#27) AND isnotnull(is_weekend#29))
+                     :     +- FileScan parquet [start_lon#20,start_lat#21,duration_min#25,hour#27,is_weekend#29,straight_km#30] Batched: true, DataFilters: [isnotnull(hour#27), isnotnull(is_weekend#29)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/trip_features], PartitionFilters: [], PushedFilters: [IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<start_lon:double,start_lat:double,duration_min:double,hour:int,is_weekend:int,straight_km:...
+                     +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, string, false], input[1, int, false], input[2, int, false]),false), [plan_id=514]
+                        +- Filter ((isnotnull(zone_id#6) AND isnotnull(hour#7)) AND isnotnull(is_weekend#8))
+                           +- FileScan parquet [zone_id#6,hour#7,is_weekend#8,avg_speed_kmh#12] Batched: true, DataFilters: [isnotnull(zone_id#6), isnotnull(hour#7), isnotnull(is_weekend#8)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/zone_hour_speed], PartitionFilters: [], PushedFilters: [IsNotNull(zone_id), IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<zone_id:string,hour:int,is_weekend:int,avg_speed_kmh:double>
+
+
+===== Q3 [broadcast_disabled] — join strategy: SortMergeJoin =====
+
+WITH t AS (
+  SELECT concat_ws('_', CAST(floor(start_lon / 0.005) AS INT), CAST(floor(start_lat / 0.005) AS INT)) AS origin_zone,
+         hour, is_weekend, duration_min, straight_km
+  FROM trip_features
+)
+SELECT t.origin_zone, count(*) AS trips,
+       round(avg(t.duration_min), 2) AS avg_duration_min,
+       round(avg(t.straight_km), 2) AS avg_straight_km,
+       round(avg(s.avg_speed_kmh), 2) AS origin_hist_speed_kmh
+FROM t JOIN zone_hour_speed s
+  ON t.origin_zone = s.zone_id AND t.hour = s.hour AND t.is_weekend = s.is_weekend
+GROUP BY t.origin_zone
+HAVING count(*) >= 1000
+ORDER BY trips DESC
+LIMIT 15
+
+--- EXPLAIN FORMATTED (planned) ---
+== Physical Plan ==
+AdaptiveSparkPlan (17)
++- TakeOrderedAndProject (16)
+   +- Filter (15)
+      +- HashAggregate (14)
+         +- Exchange (13)
+            +- HashAggregate (12)
+               +- Project (11)
+                  +- SortMergeJoin Inner (10)
+                     :- Sort (5)
+                     :  +- Exchange (4)
+                     :     +- Project (3)
+                     :        +- Filter (2)
+                     :           +- Scan parquet  (1)
+                     +- Sort (9)
+                        +- Exchange (8)
+                           +- Filter (7)
+                              +- Scan parquet  (6)
+
+
+(1) Scan parquet 
+Output [6]: [start_lon#20, start_lat#21, duration_min#25, hour#27, is_weekend#29, straight_km#30]
+Batched: true
+Location: InMemoryFileIndex [file:/workspace/data/curated/trip_features]
+PushedFilters: [IsNotNull(hour), IsNotNull(is_weekend)]
+ReadSchema: struct<start_lon:double,start_lat:double,duration_min:double,hour:int,is_weekend:int,straight_km:double>
+
+(2) Filter
+Input [6]: [start_lon#20, start_lat#21, duration_min#25, hour#27, is_weekend#29, straight_km#30]
+Condition : (isnotnull(hour#27) AND isnotnull(is_weekend#29))
+
+(3) Project
+Output [5]: [concat_ws(_, cast(cast(FLOOR((start_lon#20 / 0.005)) as int) as string), cast(cast(FLOOR((start_lat#21 / 0.005)) as int) as string)) AS origin_zone#236, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+Input [6]: [start_lon#20, start_lat#21, duration_min#25, hour#27, is_weekend#29, straight_km#30]
+
+(4) Exchange
+Input [5]: [origin_zone#236, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+Arguments: hashpartitioning(origin_zone#236, hour#27, is_weekend#29, 64), ENSURE_REQUIREMENTS, [plan_id=1019]
+
+(5) Sort
+Input [5]: [origin_zone#236, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+Arguments: [origin_zone#236 ASC NULLS FIRST, hour#27 ASC NULLS FIRST, is_weekend#29 ASC NULLS FIRST], false, 0
+
+(6) Scan parquet 
+Output [4]: [zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+Batched: true
+Location: InMemoryFileIndex [file:/workspace/data/curated/zone_hour_speed]
+PushedFilters: [IsNotNull(zone_id), IsNotNull(hour), IsNotNull(is_weekend)]
+ReadSchema: struct<zone_id:string,hour:int,is_weekend:int,avg_speed_kmh:double>
+
+(7) Filter
+Input [4]: [zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+Condition : ((isnotnull(zone_id#6) AND isnotnull(hour#7)) AND isnotnull(is_weekend#8))
+
+(8) Exchange
+Input [4]: [zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+Arguments: hashpartitioning(zone_id#6, hour#7, is_weekend#8, 64), ENSURE_REQUIREMENTS, [plan_id=1020]
+
+(9) Sort
+Input [4]: [zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+Arguments: [zone_id#6 ASC NULLS FIRST, hour#7 ASC NULLS FIRST, is_weekend#8 ASC NULLS FIRST], false, 0
+
+(10) SortMergeJoin
+Left keys [3]: [origin_zone#236, hour#27, is_weekend#29]
+Right keys [3]: [zone_id#6, hour#7, is_weekend#8]
+Join type: Inner
+Join condition: None
+
+(11) Project
+Output [4]: [origin_zone#236, duration_min#25, straight_km#30, avg_speed_kmh#12]
+Input [9]: [origin_zone#236, hour#27, is_weekend#29, duration_min#25, straight_km#30, zone_id#6, hour#7, is_weekend#8, avg_speed_kmh#12]
+
+(12) HashAggregate
+Input [4]: [origin_zone#236, duration_min#25, straight_km#30, avg_speed_kmh#12]
+Keys [1]: [origin_zone#236]
+Functions [4]: [partial_count(1), partial_avg(duration_min#25), partial_avg(straight_km#30), partial_avg(avg_speed_kmh#12)]
+Aggregate Attributes [7]: [count#246L, sum#247, count#248L, sum#249, count#250L, sum#251, count#252L]
+Results [8]: [origin_zone#236, count#253L, sum#254, count#255L, sum#256, count#257L, sum#258, count#259L]
+
+(13) Exchange
+Input [8]: [origin_zone#236, count#253L, sum#254, count#255L, sum#256, count#257L, sum#258, count#259L]
+Arguments: hashpartitioning(origin_zone#236, 64), ENSURE_REQUIREMENTS, [plan_id=1027]
+
+(14) HashAggregate
+Input [8]: [origin_zone#236, count#253L, sum#254, count#255L, sum#256, count#257L, sum#258, count#259L]
+Keys [1]: [origin_zone#236]
+Functions [4]: [count(1), avg(duration_min#25), avg(straight_km#30), avg(avg_speed_kmh#12)]
+Aggregate Attributes [4]: [count(1)#241L, avg(duration_min#25)#243, avg(straight_km#30)#244, avg(avg_speed_kmh#12)#245]
+Results [5]: [origin_zone#236, count(1)#241L AS trips#232L, round(avg(duration_min#25)#243, 2) AS avg_duration_min#233, round(avg(straight_km#30)#244, 2) AS avg_straight_km#234, round(avg(avg_speed_kmh#12)#245, 2) AS origin_hist_speed_kmh#235]
+
+(15) Filter
+Input [5]: [origin_zone#236, trips#232L, avg_duration_min#233, avg_straight_km#234, origin_hist_speed_kmh#235]
+Condition : (trips#232L >= 1000)
+
+(16) TakeOrderedAndProject
+Input [5]: [origin_zone#236, trips#232L, avg_duration_min#233, avg_straight_km#234, origin_hist_speed_kmh#235]
+Arguments: 15, [trips#232L DESC NULLS LAST], [origin_zone#236, trips#232L, avg_duration_min#233, avg_straight_km#234, origin_hist_speed_kmh#235]
+
+(17) AdaptiveSparkPlan
+Output [5]: [origin_zone#236, trips#232L, avg_duration_min#233, avg_straight_km#234, origin_hist_speed_kmh#235]
+Arguments: isFinalPlan=false
+
+
+--- final adaptive plan after execution ---
+AdaptiveSparkPlan isFinalPlan=true
++- == Final Plan ==
+   ResultQueryStage 3
+   +- TakeOrderedAndProject(limit=15, orderBy=[trips#190L DESC NULLS LAST], output=[origin_zone#194,trips#190L,avg_duration_min#191,avg_straight_km#192,origin_hist_speed_kmh#193])
+      +- *(6) Filter (trips#190L >= 1000)
+         +- *(6) HashAggregate(keys=[origin_zone#194], functions=[count(1), avg(duration_min#25), avg(straight_km#30), avg(avg_speed_kmh#12)], output=[origin_zone#194, trips#190L, avg_duration_min#191, avg_straight_km#192, origin_hist_speed_kmh#193])
+            +- AQEShuffleRead coalesced
+               +- ShuffleQueryStage 2
+                  +- Exchange hashpartitioning(origin_zone#194, 64), ENSURE_REQUIREMENTS, [plan_id=929]
+                     +- *(5) HashAggregate(keys=[origin_zone#194], functions=[partial_count(1), partial_avg(duration_min#25), partial_avg(straight_km#30), partial_avg(avg_speed_kmh#12)], output=[origin_zone#194, count#207L, sum#208, count#209L, sum#210, count#211L, sum#212, count#213L])
+                        +- *(5) Project [origin_zone#194, duration_min#25, straight_km#30, avg_speed_kmh#12]
+                           +- *(5) SortMergeJoin [origin_zone#194, hour#27, is_weekend#29], [zone_id#6, hour#7, is_weekend#8], Inner
+                              :- *(3) Sort [origin_zone#194 ASC NULLS FIRST, hour#27 ASC NULLS FIRST, is_weekend#29 ASC NULLS FIRST], false, 0
+                              :  +- AQEShuffleRead coalesced
+                              :     +- ShuffleQueryStage 0
+                              :        +- Exchange hashpartitioning(origin_zone#194, hour#27, is_weekend#29, 64), ENSURE_REQUIREMENTS, [plan_id=801]
+                              :           +- *(1) Project [concat_ws(_, cast(cast(FLOOR((start_lon#20 / 0.005)) as int) as string), cast(cast(FLOOR((start_lat#21 / 0.005)) as int) as string)) AS origin_zone#194, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+                              :              +- *(1) Filter (isnotnull(hour#27) AND isnotnull(is_weekend#29))
+                              :                 +- *(1) ColumnarToRow
+                              :                    +- FileScan parquet [start_lon#20,start_lat#21,duration_min#25,hour#27,is_weekend#29,straight_km#30] Batched: true, DataFilters: [isnotnull(hour#27), isnotnull(is_weekend#29)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/trip_features], PartitionFilters: [], PushedFilters: [IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<start_lon:double,start_lat:double,duration_min:double,hour:int,is_weekend:int,straight_km:...
+                              +- *(4) Sort [zone_id#6 ASC NULLS FIRST, hour#7 ASC NULLS FIRST, is_weekend#8 ASC NULLS FIRST], false, 0
+                                 +- AQEShuffleRead coalesced
+                                    +- ShuffleQueryStage 1
+                                       +- Exchange hashpartitioning(zone_id#6, hour#7, is_weekend#8, 64), ENSURE_REQUIREMENTS, [plan_id=820]
+                                          +- *(2) Filter ((isnotnull(zone_id#6) AND isnotnull(hour#7)) AND isnotnull(is_weekend#8))
+                                             +- *(2) ColumnarToRow
+                                                +- FileScan parquet [zone_id#6,hour#7,is_weekend#8,avg_speed_kmh#12] Batched: true, DataFilters: [isnotnull(zone_id#6), isnotnull(hour#7), isnotnull(is_weekend#8)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/zone_hour_speed], PartitionFilters: [], PushedFilters: [IsNotNull(zone_id), IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<zone_id:string,hour:int,is_weekend:int,avg_speed_kmh:double>
++- == Initial Plan ==
+   TakeOrderedAndProject(limit=15, orderBy=[trips#190L DESC NULLS LAST], output=[origin_zone#194,trips#190L,avg_duration_min#191,avg_straight_km#192,origin_hist_speed_kmh#193])
+   +- Filter (trips#190L >= 1000)
+      +- HashAggregate(keys=[origin_zone#194], functions=[count(1), avg(duration_min#25), avg(straight_km#30), avg(avg_speed_kmh#12)], output=[origin_zone#194, trips#190L, avg_duration_min#191, avg_straight_km#192, origin_hist_speed_kmh#193])
+         +- Exchange hashpartitioning(origin_zone#194, 64), ENSURE_REQUIREMENTS, [plan_id=764]
+            +- HashAggregate(keys=[origin_zone#194], functions=[partial_count(1), partial_avg(duration_min#25), partial_avg(straight_km#30), partial_avg(avg_speed_kmh#12)], output=[origin_zone#194, count#207L, sum#208, count#209L, sum#210, count#211L, sum#212, count#213L])
+               +- Project [origin_zone#194, duration_min#25, straight_km#30, avg_speed_kmh#12]
+                  +- SortMergeJoin [origin_zone#194, hour#27, is_weekend#29], [zone_id#6, hour#7, is_weekend#8], Inner
+                     :- Sort [origin_zone#194 ASC NULLS FIRST, hour#27 ASC NULLS FIRST, is_weekend#29 ASC NULLS FIRST], false, 0
+                     :  +- Exchange hashpartitioning(origin_zone#194, hour#27, is_weekend#29, 64), ENSURE_REQUIREMENTS, [plan_id=756]
+                     :     +- Project [concat_ws(_, cast(cast(FLOOR((start_lon#20 / 0.005)) as int) as string), cast(cast(FLOOR((start_lat#21 / 0.005)) as int) as string)) AS origin_zone#194, hour#27, is_weekend#29, duration_min#25, straight_km#30]
+                     :        +- Filter (isnotnull(hour#27) AND isnotnull(is_weekend#29))
+                     :           +- FileScan parquet [start_lon#20,start_lat#21,duration_min#25,hour#27,is_weekend#29,straight_km#30] Batched: true, DataFilters: [isnotnull(hour#27), isnotnull(is_weekend#29)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/trip_features], PartitionFilters: [], PushedFilters: [IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<start_lon:double,start_lat:double,duration_min:double,hour:int,is_weekend:int,straight_km:...
+                     +- Sort [zone_id#6 ASC NULLS FIRST, hour#7 ASC NULLS FIRST, is_weekend#8 ASC NULLS FIRST], false, 0
+                        +- Exchange hashpartitioning(zone_id#6, hour#7, is_weekend#8, 64), ENSURE_REQUIREMENTS, [plan_id=757]
+                           +- Filter ((isnotnull(zone_id#6) AND isnotnull(hour#7)) AND isnotnull(is_weekend#8))
+                              +- FileScan parquet [zone_id#6,hour#7,is_weekend#8,avg_speed_kmh#12] Batched: true, DataFilters: [isnotnull(zone_id#6), isnotnull(hour#7), isnotnull(is_weekend#8)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[file:/workspace/data/curated/zone_hour_speed], PartitionFilters: [], PushedFilters: [IsNotNull(zone_id), IsNotNull(hour), IsNotNull(is_weekend)], ReadSchema: struct<zone_id:string,hour:int,is_weekend:int,avg_speed_kmh:double>
+
+
+===== Q1 — EXPLAIN FORMATTED =====
+
+SELECT z.zone_id, round(z.centroid_lat, 4) AS lat, round(z.centroid_lon, 4) AS lon,
+       round(sum(s.total_km) * 3600 / sum(s.total_s), 2) AS peak_speed_kmh,
+       sum(s.n_segments) AS n_segments
+FROM zone_hour_speed s JOIN zones z ON s.zone_id = z.zone_id
+WHERE s.is_weekend = 0 AND s.hour BETWEEN 17 AND 19
+GROUP BY z.zone_id, z.centroid_lat, z.centroid_lon
+HAVING sum(s.n_segments) >= 2000
+ORDER BY peak_speed_kmh ASC
+LIMIT 10
+
+== Physical Plan ==
+AdaptiveSparkPlan (14)
++- TakeOrderedAndProject (13)
+   +- Filter (12)
+      +- HashAggregate (11)
+         +- Exchange (10)
+            +- HashAggregate (9)
+               +- Project (8)
+                  +- BroadcastHashJoin Inner BuildRight (7)
+                     :- Project (3)
+                     :  +- Filter (2)
+                     :     +- Scan parquet  (1)
+                     +- BroadcastExchange (6)
+                        +- Filter (5)
+                           +- Scan parquet  (4)
+
+
+(1) Scan parquet 
+Output [6]: [zone_id#6, hour#7, is_weekend#8, total_km#9, total_s#10, n_segments#11L]
+Batched: true
+Location: InMemoryFileIndex [file:/workspace/data/curated/zone_hour_speed]
+PushedFilters: [IsNotNull(is_weekend), IsNotNull(hour), EqualTo(is_weekend,0), GreaterThanOrEqual(hour,17), LessThanOrEqual(hour,19), IsNotNull(zone_id)]
+ReadSchema: struct<zone_id:string,hour:int,is_weekend:int,total_km:double,total_s:double,n_segments:bigint>
+
+(2) Filter
+Input [6]: [zone_id#6, hour#7, is_weekend#8, total_km#9, total_s#10, n_segments#11L]
+Condition : (((((isnotnull(is_weekend#8) AND isnotnull(hour#7)) AND (is_weekend#8 = 0)) AND (hour#7 >= 17)) AND (hour#7 <= 19)) AND isnotnull(zone_id#6))
+
+(3) Project
+Output [4]: [zone_id#6, total_km#9, total_s#10, n_segments#11L]
+Input [6]: [zone_id#6, hour#7, is_weekend#8, total_km#9, total_s#10, n_segments#11L]
+
+(4) Scan parquet 
+Output [3]: [zone_id#0, centroid_lon#4, centroid_lat#5]
+Batched: true
+Location: InMemoryFileIndex [file:/workspace/data/curated/zones]
+PushedFilters: [IsNotNull(zone_id)]
+ReadSchema: struct<zone_id:string,centroid_lon:double,centroid_lat:double>
+
+(5) Filter
+Input [3]: [zone_id#0, centroid_lon#4, centroid_lat#5]
+Condition : isnotnull(zone_id#0)
+
+(6) BroadcastExchange
+Input [3]: [zone_id#0, centroid_lon#4, centroid_lat#5]
+Arguments: HashedRelationBroadcastMode(List(input[0, string, false]),false), [plan_id=1084]
+
+(7) BroadcastHashJoin
+Left keys [1]: [zone_id#6]
+Right keys [1]: [zone_id#0]
+Join type: Inner
+Join condition: None
+
+(8) Project
+Output [6]: [total_km#9, total_s#10, n_segments#11L, zone_id#0, centroid_lon#4, centroid_lat#5]
+Input [7]: [zone_id#6, total_km#9, total_s#10, n_segments#11L, zone_id#0, centroid_lon#4, centroid_lat#5]
+
+(9) HashAggregate
+Input [6]: [total_km#9, total_s#10, n_segments#11L, zone_id#0, centroid_lon#4, centroid_lat#5]
+Keys [3]: [zone_id#0, knownfloatingpointnormalized(normalizenanandzero(centroid_lat#5)) AS centroid_lat#5, knownfloatingpointnormalized(normalizenanandzero(centroid_lon#4)) AS centroid_lon#4]
+Functions [3]: [partial_sum(total_km#9), partial_sum(total_s#10), partial_sum(n_segments#11L)]
+Aggregate Attributes [3]: [sum#272, sum#273, sum#274L]
+Results [6]: [zone_id#0, centroid_lat#5, centroid_lon#4, sum#275, sum#276, sum#277L]
+
+(10) Exchange
+Input [6]: [zone_id#0, centroid_lat#5, centroid_lon#4, sum#275, sum#276, sum#277L]
+Arguments: hashpartitioning(zone_id#0, centroid_lat#5, centroid_lon#4, 64), ENSURE_REQUIREMENTS, [plan_id=1089]
+
+(11) HashAggregate
+Input [6]: [zone_id#0, centroid_lat#5, centroid_lon#4, sum#275, sum#276, sum#277L]
+Keys [3]: [zone_id#0, centroid_lat#5, centroid_lon#4]
+Functions [3]: [sum(total_km#9), sum(total_s#10), sum(n_segments#11L)]
+Aggregate Attributes [3]: [sum(total_km#9)#268, sum(total_s#10)#269, sum(n_segments#11L)#270L]
+Results [5]: [zone_id#0, round(centroid_lat#5, 4) AS lat#260, round(centroid_lon#4, 4) AS lon#261, round(((sum(total_km#9)#268 * 3600.0) / sum(total_s#10)#269), 2) AS peak_speed_kmh#262, sum(n_segments#11L)#270L AS n_segments#263L]
+
+(12) Filter
+Input [5]: [zone_id#0, lat#260, lon#261, peak_speed_kmh#262, n_segments#263L]
+Condition : (isnotnull(n_segments#263L) AND (n_segments#263L >= 2000))
+
+(13) TakeOrderedAndProject
+Input [5]: [zone_id#0, lat#260, lon#261, peak_speed_kmh#262, n_segments#263L]
+Arguments: 10, [peak_speed_kmh#262 ASC NULLS FIRST], [zone_id#0, lat#260, lon#261, peak_speed_kmh#262, n_segments#263L]
+
+(14) AdaptiveSparkPlan
+Output [5]: [zone_id#0, lat#260, lon#261, peak_speed_kmh#262, n_segments#263L]
+Arguments: isFinalPlan=false
+
+

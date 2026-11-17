@@ -1,0 +1,46 @@
+{
+  "_generated_utc": "2026-11-13T14:10:17+00:00",
+  "_python": "3.12.16",
+  "split": "train start_ts < 2014-05-01 <= test",
+  "n_train": 1343537,
+  "n_test": 303810,
+  "rows": [
+    {
+      "model": "naive mean (train)",
+      "MAE_min": 5.399,
+      "RMSE_min": 9.071,
+      "mean_signed_error_min": -0.051,
+      "median_abs_pct_error": 37.2,
+      "pct_over_estimated": 62.2,
+      "pct_under_estimated": 37.8
+    },
+    {
+      "model": "historical speed: straight_km / median speed(hour, weekend)",
+      "MAE_min": 5.455,
+      "RMSE_min": 9.913,
+      "mean_signed_error_min": 0.478,
+      "median_abs_pct_error": 31.3,
+      "pct_over_estimated": 51.8,
+      "pct_under_estimated": 48.2
+    },
+    {
+      "model": "linear regression",
+      "MAE_min": 4.348,
+      "RMSE_min": 8.156,
+      "mean_signed_error_min": 0.159,
+      "median_abs_pct_error": 29.7,
+      "pct_over_estimated": 66.4,
+      "pct_under_estimated": 33.6
+    },
+    {
+      "model": "GBT (HistGradientBoosting, full train period)",
+      "MAE_min": 4.018,
+      "RMSE_min": 7.866,
+      "mean_signed_error_min": 0.065,
+      "median_abs_pct_error": 25.5,
+      "pct_over_estimated": 65.2,
+      "pct_under_estimated": 34.8
+    }
+  ],
+  "kind": "measured"
+}

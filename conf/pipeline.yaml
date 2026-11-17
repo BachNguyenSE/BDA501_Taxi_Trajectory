@@ -1,0 +1,67 @@
+# Central configuration. Paths are relative to the project root (/workspace in Docker).
+seed: 42
+
+paths:
+  nyc_raw: data/raw/nyc_tlc
+  porto_raw: data/raw/porto/train.csv
+  porto_sample: data/sample/porto_sample.csv
+  porto_stands: data/raw/porto/metaData_taxistandsID_name_GPSlocation.csv
+  curated: data/curated
+  evidence_eda: evidence/eda
+  evidence_ml: evidence/ml
+  models: outputs/models
+
+spark:
+  app_name: bda501-taxi
+  master: local[*]
+  shuffle_partitions: 64
+  driver_memory: 5g   # Docker Desktop VM default ~8 GB; raise if you give Docker more RAM
+
+nyc:
+  months: ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06"]
+  period_start: "2025-01-01"
+  period_end: "2025-07-01"
+
+porto:
+  sampling_interval_s: 15
+  # Porto metropolitan bounding box (lon/lat). POLYLINE points are [lon, lat].
+  bbox: {lon_min: -8.80, lon_max: -8.45, lat_min: 41.05, lat_max: 41.30}
+  max_segment_speed_kmh: 150   # a 15 s jump faster than this is treated as GPS noise
+
+etl:
+  grid_deg: 0.005          # zone size, same grid as the EDA (~420 m x 555 m at Porto's latitude)
+  max_trip_duration_min: 180
+  congestion_percentile: 0.25   # a zone-hour is "congested" if its avg speed is <= this percentile of all zone-hours
+
+ml:
+  train_fraction: 0.8
+  sklearn_sample_rows: 150000   # rows collected to the driver/pandas to fit the fast-serving sklearn model
+
+mongo:
+  uri: mongodb://mongo:27017
+  db: bda501_taxi
+  zone_hour_speed_coll: zone_hour_speed
+  zone_graph_coll: zone_graph_edges
+  zones_coll: zones
+
+serving:
+  host: 0.0.0.0
+  port: 8000
+  max_route_hops: 60   # safety cap on shortest-path length (zones)
+
+streaming:
+  bootstrap: kafka:9092
+  topic: porto.gps.pings
+  partitions: 3                     # key = TAXI_ID -> per-vehicle ordering inside a partition
+  replay_start_local: "2014-05-14T16:00"   # Wednesday afternoon into the evening peak
+  replay_hours: 3
+  speedup: 60                       # 1 wall-clock second = 1 minute of event time
+  junk: {duplicate_rate: 0.01, late_rate: 0.005, late_minutes: 30, malformed_rate: 0.002}
+  watermark: "10 minutes"           # GPS units buffer fixes while offline; later than this = dropped
+  window: "15 minutes"              # tumbling event-time window per zone
+  max_offsets_per_trigger: 500
+  checkpoint_dir: data/checkpoints
+  live_coll: zone_speed_live
+  quality_coll: stream_quality
+  min_live_segments: 5              # a zone-window needs this many segments to be used
+  slower_than_usual_ratio: 0.7      # live speed < 70% of the historical zone x hour speed

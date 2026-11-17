@@ -1,0 +1,193 @@
+{
+  "_generated_utc": "2026-11-11T08:31:36+00:00",
+  "_python": "3.12.16",
+  "dataset": "Porto taxi trajectories (ECML/PKDD 2015), train.csv",
+  "file_gb": 1.94,
+  "volume": {
+    "trips": 1710670,
+    "distinct_trip_ids": 1710589,
+    "distinct_taxis": 448,
+    "gps_points": 83409386,
+    "gps_segments": 81704617,
+    "first_trip_utc": "2013-07-01 00:00:53",
+    "last_trip_utc": "2014-06-30 23:59:56",
+    "unparseable_polyline": 0
+  },
+  "call_type": [
+    {
+      "CALL_TYPE": "B",
+      "count": 817881
+    },
+    {
+      "CALL_TYPE": "C",
+      "count": 528019
+    },
+    {
+      "CALL_TYPE": "A",
+      "count": 364770
+    }
+  ],
+  "day_type": [
+    {
+      "DAY_TYPE": "A",
+      "count": 1710670
+    }
+  ],
+  "missing_data": [
+    {
+      "MISSING_DATA": "False",
+      "count": 1710660
+    },
+    {
+      "MISSING_DATA": "True",
+      "count": 10
+    }
+  ],
+  "null_or_empty": {
+    "ORIGIN_CALL": 1345900,
+    "ORIGIN_STAND": 904091,
+    "TAXI_ID": 0
+  },
+  "data_quality": [
+    {
+      "rule": "missing_data_true",
+      "trips": 10,
+      "pct": 0.001
+    },
+    {
+      "rule": "polyline_empty_or_1_point",
+      "trips": 36510,
+      "pct": 2.134
+    },
+    {
+      "rule": "duration_gt_180_min",
+      "trips": 847,
+      "pct": 0.05
+    },
+    {
+      "rule": "has_gps_jump_segment",
+      "trips": 174912,
+      "pct": 10.225
+    },
+    {
+      "rule": "has_point_outside_porto_bbox",
+      "trips": 12433,
+      "pct": 0.727
+    },
+    {
+      "rule": "first_point_looks_lat_lon_swapped",
+      "trips": 0,
+      "pct": 0.0
+    }
+  ],
+  "gps_jump_segments": 223060,
+  "trips_passing_basic_rules": 1673305,
+  "quantiles": {
+    "n_points": {
+      "p05": 15,
+      "p50": 42,
+      "p95": 103,
+      "p99": 191
+    },
+    "duration_min": {
+      "p05": 3.5,
+      "p50": 10.25,
+      "p95": 25.5,
+      "p99": 47.5
+    },
+    "length_km": {
+      "p05": 1.1663308760498774,
+      "p50": 4.01138852582058,
+      "p95": 15.012499597288764,
+      "p99": 24.278193504583854
+    }
+  },
+  "trips_by_month": [
+    {
+      "month": "2013-07",
+      "count": 145501
+    },
+    {
+      "month": "2013-08",
+      "count": 125804
+    },
+    {
+      "month": "2013-09",
+      "count": 147600
+    },
+    {
+      "month": "2013-10",
+      "count": 153504
+    },
+    {
+      "month": "2013-11",
+      "count": 140024
+    },
+    {
+      "month": "2013-12",
+      "count": 146258
+    },
+    {
+      "month": "2014-01",
+      "count": 130875
+    },
+    {
+      "month": "2014-02",
+      "count": 129872
+    },
+    {
+      "month": "2014-03",
+      "count": 138905
+    },
+    {
+      "month": "2014-04",
+      "count": 136931
+    },
+    {
+      "month": "2014-05",
+      "count": 161982
+    },
+    {
+      "month": "2014-06",
+      "count": 153288
+    },
+    {
+      "month": "2014-07",
+      "count": 126
+    }
+  ],
+  "grid_deg": 0.005,
+  "grid": {
+    "cells_with_data": 2152,
+    "cells_ge_1000_points": 1051,
+    "median_points_per_cell": 906
+  },
+  "example_trip": {
+    "TRIP_ID": "1372638165620000435",
+    "points": 70,
+    "duration_min": 17.25,
+    "length_km": 9.140672489580865
+  },
+  "feasibility": [
+    {
+      "requirement": "Trip duration / ETA prediction",
+      "feasible": "YES",
+      "evidence": "label = (n_points-1) x 15s; start point + start time known at request time"
+    },
+    {
+      "requirement": "Locate congested AREAS along the way",
+      "feasible": "YES",
+      "evidence": "81,704,617 timed 15 s segments → speed per area per hour"
+    },
+    {
+      "requirement": "Suggest a ROUTE (sequence of areas)",
+      "feasible": "YES",
+      "evidence": "consecutive fixes give area-to-area transitions → weighted travel graph"
+    },
+    {
+      "requirement": "Speed per area per hour",
+      "feasible": "YES",
+      "evidence": "2,152 grid cells (0.005°) observed; 1,051 with ≥1,000 points"
+    }
+  ]
+}

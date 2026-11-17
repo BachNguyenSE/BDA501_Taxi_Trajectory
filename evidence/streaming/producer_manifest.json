@@ -1,0 +1,38 @@
+{
+  "_generated_utc": "2026-11-13T13:27:42+00:00",
+  "_python": "3.12.16",
+  "kind": "REPLAY of historical data (not a live feed)",
+  "source": "/workspace/data/raw/porto/train.csv",
+  "topic": "porto.gps.pings",
+  "partitions": 3,
+  "key": "TAXI_ID",
+  "replay_window_local": [
+    "2014-05-14T16:00:00+01:00",
+    "2014-05-14T19:00:00+01:00"
+  ],
+  "speedup": 60,
+  "wall_clock_s": 236.2,
+  "seed": 42,
+  "junk_config": {
+    "duplicate_rate": 0.01,
+    "late_rate": 0.005,
+    "late_minutes": 30,
+    "malformed_rate": 0.002
+  },
+  "trips": 754,
+  "unique_fixes": 42145,
+  "messages_total": 42617,
+  "messages_by_kind": {
+    "on_time": 41956,
+    "late": 189,
+    "duplicate_copies": 394,
+    "malformed": 78
+  },
+  "valid_segments_total": 41201,
+  "expected_on_time_segments": 41019,
+  "late_valid_segments": 182,
+  "event_time_range_utc": [
+    "2014-05-14T15:00:30+00:00",
+    "2014-05-14T18:44:26+00:00"
+  ]
+}

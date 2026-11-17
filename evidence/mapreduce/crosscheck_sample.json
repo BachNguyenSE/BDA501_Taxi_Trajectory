@@ -1,0 +1,47 @@
+{
+  "_generated_utc": "2026-11-13T12:59:15+00:00",
+  "_python": "3.12.16",
+  "input": "data/sample/porto_sample.csv",
+  "verdict": "PASS",
+  "summary": {
+    "keys_in_both": 16251,
+    "n_segments_exact": 16251,
+    "total_km_within_tol": 16251,
+    "max_abs_km_diff": 7.014918004699666e-05,
+    "max_abs_speed_diff_kmh": 0.0005991769806001912,
+    "keys_mapreduce": 16251,
+    "keys_spark_sql": 16251,
+    "keys_only_in_mapreduce": 0,
+    "keys_only_in_spark_sql": 0,
+    "max_rel_km_diff": 1.4698436034508799e-06
+  },
+  "total_segments": {
+    "mapreduce": 940231,
+    "spark_sql": 940231
+  },
+  "total_km": {
+    "mapreduce": 103736.26651800009,
+    "spark_sql": 103736.25495845497
+  },
+  "hadoop_counters": {
+    "map_input_records": 20001,
+    "map_output_records": 940231,
+    "segments_gps_jump": 2292,
+    "segments_outside_bbox": 17308,
+    "segments_total": 959831,
+    "skip_header": 1,
+    "skip_lt_2_points": 471,
+    "trips_used": 19529,
+    "Map input records": 20001,
+    "Map output records": 940231,
+    "Combine input records": 940231,
+    "Combine output records": 25666,
+    "Reduce input records": 25666,
+    "Reduce output records": 16251,
+    "Reduce shuffle bytes": 728307,
+    "Launched map tasks": 2,
+    "Launched reduce tasks": 2
+  },
+  "km_tolerance_per_segment": 1e-06,
+  "reference_sql": "\nWITH trips AS (\n  SELECT TIMESTAMP AS ts, from_json(POLYLINE, 'array<array<double>>') AS poly\n  FROM raw_trips\n  WHERE coalesce(MISSING_DATA, '') <> 'True' AND TIMESTAMP IS NOT NULL\n), usable AS (\n  SELECT ts, poly,\n         unix_timestamp(from_utc_timestamp(timestamp_seconds(ts), 'Europe/Lisbon')) - ts AS utc_offset_s\n  FROM trips\n  WHERE size(poly) >= 2\n), segments AS (\n  SELECT ts + utc_offset_s AS local0, i,\n         poly[i - 1][0] AS lon1, poly[i - 1][1] AS lat1, poly[i][0] AS lon2, poly[i][1] AS lat2\n  FROM usable LATERAL VIEW explode(sequence(1, size(poly) - 1)) s AS i\n), classified AS (\n  SELECT *,\n         (lon1 BETWEEN -8.8 AND -8.45 AND lat1 BETWEEN 41.05 AND 41.3) AND (lon2 BETWEEN -8.8 AND -8.45 AND lat2 BETWEEN 41.05 AND 41.3) AS both_inside,\n         2 * 6371.0 * asin(sqrt(pow(sin((radians(lat2) - radians(lat1)) / 2), 2) + cos(radians(lat1)) * cos(radians(lat2)) * pow(sin(radians(lon2 - lon1) / 2), 2))) AS km\n  FROM segments\n)\nSELECT CAST(floor(((lat1 + lat2) / 2 - 41.05) / 0.005) AS INT) AS row,\n       CAST(floor(((lon1 + lon2) / 2 - -8.8) / 0.005) AS INT) AS col,\n       CAST(pmod(floor((local0 + (i - 1) * 15) / 3600), 24) AS INT) AS hour,\n       count(*) AS n_segments,\n       sum(km) AS total_km,\n       count(*) * 15 AS total_s\nFROM classified\nWHERE both_inside AND km <= 0.625\nGROUP BY 1, 2, 3\n"
+}

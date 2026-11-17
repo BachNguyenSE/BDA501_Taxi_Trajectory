@@ -1,0 +1,40 @@
+{
+  "_generated_utc": "2026-11-13T13:22:34+00:00",
+  "_python": "3.12.16",
+  "question": "Does broadcasting the 72k-row zone_hour_speed table beat a sort-merge join for Q3?",
+  "environment": "Docker Desktop VM 12 vCPU / 8 GB, Spark 4.0.1 local[*], driver 5g, shuffle partitions 64, AQE on",
+  "input_rows": {
+    "trip_features": 1647347,
+    "zone_hour_speed": 72142
+  },
+  "factor": "spark.sql.autoBroadcastJoinThreshold (default vs -1)",
+  "runs": [
+    {
+      "variant": "broadcast_allowed (default)",
+      "join_strategy": "BroadcastHashJoin",
+      "runtime_s_median": 0.295,
+      "runtime_s_runs": [
+        0.326,
+        0.284,
+        0.295
+      ],
+      "shuffle_write_MB": 0.48,
+      "shuffle_read_MB": 0.48,
+      "stages": 4
+    },
+    {
+      "variant": "broadcast_disabled",
+      "join_strategy": "SortMergeJoin",
+      "runtime_s_median": 0.327,
+      "runtime_s_runs": [
+        0.334,
+        0.327,
+        0.316
+      ],
+      "shuffle_write_MB": 36.55,
+      "shuffle_read_MB": 36.55,
+      "stages": 9
+    }
+  ],
+  "kind": "measured"
+}

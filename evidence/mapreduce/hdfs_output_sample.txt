@@ -1,0 +1,4 @@
+Found 3 items
+-rw-r--r--   1 hadoop supergroup          0 2026-11-13 12:52 /porto/output/zone_hour_speed_sample/_SUCCESS
+-rw-r--r--   1 hadoop supergroup     448402 2026-11-13 12:52 /porto/output/zone_hour_speed_sample/part-00000
+-rw-r--r--   1 hadoop supergroup     448350 2026-11-13 12:52 /porto/output/zone_hour_speed_sample/part-00001

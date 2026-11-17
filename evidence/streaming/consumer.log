@@ -1,0 +1,93 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+:: loading settings :: url = jar:file:/usr/local/lib/python3.12/site-packages/pyspark/jars/ivy-2.5.3.jar!/org/apache/ivy/core/settings/ivysettings.xml
+Ivy Default Cache set to: /workspace/.ivy2/cache
+The jars for the packages stored in: /workspace/.ivy2/jars
+org.apache.spark#spark-sql-kafka-0-10_2.13 added as a dependency
+:: resolving dependencies :: org.apache.spark#spark-submit-parent-264a6ff0-d8f0-4cda-a6cc-e2ba7a5ee1d5;1.0
+	confs: [default]
+	found org.apache.spark#spark-sql-kafka-0-10_2.13;4.0.1 in central
+	found org.apache.spark#spark-token-provider-kafka-0-10_2.13;4.0.1 in central
+	found org.apache.kafka#kafka-clients;3.9.1 in central
+	found org.lz4#lz4-java;1.8.0 in central
+	found org.xerial.snappy#snappy-java;1.1.10.7 in central
+	found org.slf4j#slf4j-api;2.0.16 in central
+	found org.apache.hadoop#hadoop-client-runtime;3.4.1 in central
+	found org.apache.hadoop#hadoop-client-api;3.4.1 in central
+	found com.google.code.findbugs#jsr305;3.0.0 in central
+	found org.scala-lang.modules#scala-parallel-collections_2.13;1.2.0 in central
+	found org.apache.commons#commons-pool2;2.12.0 in central
+:: resolution report :: resolve 168ms :: artifacts dl 8ms
+	:: modules in use:
+	com.google.code.findbugs#jsr305;3.0.0 from central in [default]
+	org.apache.commons#commons-pool2;2.12.0 from central in [default]
+	org.apache.hadoop#hadoop-client-api;3.4.1 from central in [default]
+	org.apache.hadoop#hadoop-client-runtime;3.4.1 from central in [default]
+	org.apache.kafka#kafka-clients;3.9.1 from central in [default]
+	org.apache.spark#spark-sql-kafka-0-10_2.13;4.0.1 from central in [default]
+	org.apache.spark#spark-token-provider-kafka-0-10_2.13;4.0.1 from central in [default]
+	org.lz4#lz4-java;1.8.0 from central in [default]
+	org.scala-lang.modules#scala-parallel-collections_2.13;1.2.0 from central in [default]
+	org.slf4j#slf4j-api;2.0.16 from central in [default]
+	org.xerial.snappy#snappy-java;1.1.10.7 from central in [default]
+	---------------------------------------------------------------------
+	|                  |            modules            ||   artifacts   |
+	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+	---------------------------------------------------------------------
+	|      default     |   11  |   0   |   0   |   0   ||   11  |   0   |
+	---------------------------------------------------------------------
+:: retrieving :: org.apache.spark#spark-submit-parent-264a6ff0-d8f0-4cda-a6cc-e2ba7a5ee1d5
+	confs: [default]
+	0 artifacts copied, 11 already retrieved (0kB/4ms)
+26/11/13 13:23:17 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/11/13 13:23:19 WARN ResolveWriteToStream: spark.sql.adaptive.enabled is not supported in streaming DataFrames/Datasets and will be disabled.
+26/11/13 13:23:20 WARN ResolveWriteToStream: spark.sql.adaptive.enabled is not supported in streaming DataFrames/Datasets and will be disabled.
+26/11/13 13:23:20 WARN SparkStringUtils: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+26/11/13 13:31:47 WARN DAGScheduler: Failed to cancel job group 2003defa-4c59-46ec-9bd0-fe48520a7cf8. Cannot find active jobs for it.
+26/11/13 13:31:47 WARN DAGScheduler: Failed to cancel job group 2003defa-4c59-46ec-9bd0-fe48520a7cf8. Cannot find active jobs for it.
+26/11/13 13:31:47 WARN DAGScheduler: Failed to cancel job group c6b1f3fb-5c6d-4e44-a31d-ca8aa4d593fe. Cannot find active jobs for it.
+26/11/13 13:31:47 WARN DAGScheduler: Failed to cancel job group c6b1f3fb-5c6d-4e44-a31d-ca8aa4d593fe. Cannot find active jobs for it.
+# Streaming run — Kafka replay -> Structured Streaming -> MongoDB
+
+Source: REPLAY of historical trips (['2014-05-14T16:00:00+01:00', '2014-05-14T19:00:00+01:00']), not a live feed.
+Trigger `5 seconds`, watermark 10 minutes, tumbling window 15 minutes,
+maxOffsetsPerTrigger 500. Measured from StreamingQueryProgress + MongoDB.
+
+## Ground truth (producer) vs observed (consumer)
+| check | producer | consumer |
+|---|---|---|
+| messages consumed (quality query) vs produced | 42,617 | 42,617 |
+| malformed payloads detected vs injected | 78 | 78 |
+| duplicate copies dropped by dropDuplicatesWithinWatermark vs injected | 394 | 394 |
+| rows dropped as later than the 10 minutes watermark vs late fixes injected | 189 | 186 |
+| segments aggregated into zone windows vs expected on-time valid segments | 41,019 | 41,022 |
+
+## Live query
+| micro_batches | input_rows | dropped_duplicates | max_batch_duration_ms | last_watermark |
+|---|---|---|---|---|
+| 87 | 42,617 | 394 | 998 | 2014-05-14T18:34:11.000Z |
+Dropped by watermark per stateful operator: {'stateStoreSave': 0, 'dedupeWithinWatermark': 186}
+
+Spark only guarantees one direction: rows within the watermark delay are never dropped; rows later
+than it MAY be dropped. The watermark a micro-batch filters with comes from earlier batches, so when the
+consumer lags and one batch spans more event time than the delay, late rows in that batch get through.
+
+## Last 8 micro-batches (watermark used vs event-time span)
+| batch | input_rows | event_min | event_max | watermark_used | dropped_late |
+|---|---|---|---|---|---|
+| 80 | 499 | 2014-05-14T17:23:32.000Z | 2014-05-14T18:00:40.000Z | 2014-05-14T17:48:25.000Z | 1 |
+| 81 | 499 | 2014-05-14T17:30:54.000Z | 2014-05-14T18:03:05.000Z | 2014-05-14T17:50:40.000Z | 4 |
+| 82 | 499 | 2014-05-14T17:28:54.000Z | 2014-05-14T18:05:59.000Z | 2014-05-14T17:53:05.000Z | 3 |
+| 83 | 498 | 2014-05-14T17:37:59.000Z | 2014-05-14T18:09:38.000Z | 2014-05-14T17:55:59.000Z | 2 |
+| 84 | 499 | 2014-05-14T17:32:55.000Z | 2014-05-14T18:14:09.000Z | 2014-05-14T17:59:38.000Z | 3 |
+| 85 | 498 | 2014-05-14T17:35:50.000Z | 2014-05-14T18:20:26.000Z | 2014-05-14T18:04:09.000Z | 4 |
+| 86 | 499 | 2014-05-14T17:42:15.000Z | 2014-05-14T18:39:56.000Z | 2014-05-14T18:10:26.000Z | 19 |
+| 87 | 68 | 2014-05-14T18:17:07.000Z | 2014-05-14T18:44:11.000Z | 2014-05-14T18:29:56.000Z | 0 |
+
+## MongoDB `zone_speed_live`
+| collection | zone_window_docs | segments | distinct_zones | window_range_utc |
+|---|---|---|---|---|
+| zone_speed_live | 3,328 | 41,022 | 668 | ['2014-05-14 15:00:00', '2014-05-14 18:45:00'] |
+
